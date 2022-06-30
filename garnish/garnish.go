@@ -37,7 +37,8 @@ func (g *garnish) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	u := r.URL.String()
 	cached := g.c.get(u)
-	if cached != nil { // handle Xcache -response
+	// handle Xcache -response
+	if cached != nil {
 		rw.Header().Set(Xcache, XcacheHit)
 		_, _ = rw.Write(cached)
 		return
