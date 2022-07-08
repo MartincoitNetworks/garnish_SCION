@@ -3,21 +3,22 @@ package garnish_test
 import (
 	"context"
 	"fmt"
-	"github.com/bkielbasa/garnish/garnish"
-	"github.com/netsec-ethz/scion-apps/pkg/pan"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"inet.af/netaddr"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
+
+	"github.com/bkielbasa/garnish/garnish"
+	"github.com/netsec-ethz/scion-apps/pkg/pan"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"inet.af/netaddr"
 )
 
 func TestGarnish_CacheRequest(t *testing.T) {
 	var listen pan.IPPortValue
-	
+
 	err := listen.Set("18-ffaa:1:fc1,147.28.145.13:5000")
 	if err != nil {
 		return
@@ -39,6 +40,7 @@ func TestGarnish_CacheRequest(t *testing.T) {
 		xcache := w.Header().Get("X-Cache")
 		assert.Equal(t, expectedHeader, xcache)
 	}
+
 }
 
 //change into scion
