@@ -74,6 +74,13 @@ func (g *garnish) ServeHTTP(rw http.ResponseWriter, r *http.Request, serverAddre
 		return
 	}
 	defer conn.Close()
+
+	nBytes, err := conn.Write([]byte(fmt.Sprintf("garnish message")))
+	if err != nil {
+		fmt.Print(nBytes)
+		fmt.Println(err)
+	}
+
 	buffer := make([]byte, 16*1024)
 	if err = conn.SetReadDeadline(time.Now().Add(1 * time.Second)); err != nil {
 		fmt.Println("SetReadDeadline error")
@@ -81,15 +88,11 @@ func (g *garnish) ServeHTTP(rw http.ResponseWriter, r *http.Request, serverAddre
 	}
 	n, err := conn.Read(buffer) //read to this buffer
 	if err != nil {
-		fmt.Println("read from server error")
-		return
+		fmt.Println(err)
+		//return
 	}
 	data := buffer[:n]
-	cc := rw.Header().Get(cacheControl)
-	toCache, duration := parseCacheControl(cc)
-	//check if it needs cache
-	if toCache {
-		g.c.store(u, data, duration)
-	}
+	duration := time.Duration(123) * time.Second
+	g.c.store(u, data, duration)
 
 }
