@@ -54,6 +54,8 @@ func (g *garnish) ServeHTTP(rw http.ResponseWriter, r *http.Request, serverAddre
 	if cached != nil {
 		rw.Header().Set(Xcache, XcacheHit)
 		_, _ = rw.Write(cached)
+		fmt.Print("Cached data: ")
+		fmt.Println(cached)
 		return
 	}
 
@@ -94,5 +96,6 @@ func (g *garnish) ServeHTTP(rw http.ResponseWriter, r *http.Request, serverAddre
 	data := buffer[:n]
 	duration := time.Duration(123) * time.Second
 	g.c.store(u, data, duration)
-
+	fmt.Print("Stored data: ")
+	fmt.Println(data)
 }

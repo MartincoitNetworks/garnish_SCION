@@ -19,11 +19,6 @@ import (
 
 func main() {
 	var listen pan.IPPortValue
-	// err := listen.Set("127.0.0.1:1234")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
 	flag.Var(&listen, "listen", "[Server] local IP:port to listen on")
 	remoteAddr := flag.String("remote", "", "[Client] Remote (i.e. the server's) SCION Address (e.g. 17-ffaa:1:1,[127.0.0.1]:12345)")
 	flag.Parse()
@@ -37,14 +32,12 @@ func main() {
 		runClient(*remoteAddr)
 	}
 
-	// stop := runServer(listen.Get())
-	// defer stop() //stop will run when we're finished
-
 }
 func runClient(address string) {
 
 	fmt.Println(address)
-	g := garnish.New(url.URL{Scheme: "http", Host: "localhost:8088"})
+	u := url.URL{Scheme: "http", Host: "localhost:8088"}
+	g := garnish.New(u)
 	expectedXCacheHeaders := []string{garnish.XcacheMiss, garnish.XcacheHit}
 
 	for _, expectedHeader := range expectedXCacheHeaders {
@@ -55,6 +48,7 @@ func runClient(address string) {
 		xcache := w.Header().Get("X-Cache")
 		fmt.Println("Expected header: " + expectedHeader)
 		fmt.Println("Real header:" + xcache)
+
 	}
 }
 
@@ -72,7 +66,7 @@ func runServer(listen netaddr.IPPort) func() {
 	if err != nil {
 		fmt.Printf("read error")
 	}
-	msg := fmt.Sprintf("This is the data in server!")
+	msg := fmt.Sprintf("A")
 	n, err = conn.WriteTo([]byte(msg), from)
 	if err != nil {
 		fmt.Printf("write error")
