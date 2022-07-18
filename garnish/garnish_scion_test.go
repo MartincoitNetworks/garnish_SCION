@@ -19,8 +19,9 @@ import (
 func TestGarnish_CacheRequest(t *testing.T) {
 	var listen pan.IPPortValue
 
-	err := listen.Set("18-ffaa:1:fc1,147.28.145.13:5000")
+	err := listen.Set("127.0.0.1:1234")
 	if err != nil {
+		fmt.Println(err)
 		return
 	}
 
