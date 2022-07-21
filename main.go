@@ -2,19 +2,16 @@ package main
 
 import (
 	"context"
-	//"errors"
 	"flag"
 	"fmt"
 	"inet.af/netaddr"
+	"log"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"time"
-	//"os"
 
 	"github.com/bkielbasa/garnish/garnish"
 	"github.com/netsec-ethz/scion-apps/pkg/pan"
-	//"garnish_SCION/garnish/garnish"
 )
 
 func main() {
@@ -29,53 +26,71 @@ func main() {
 	if listen.Get().Port() > 0 {
 		runServer(listen.Get())
 	} else {
-		runClient(*remoteAddr)
+		runGarnish(*remoteAddr)
 	}
 
 }
-func runClient(address string) {
 
-	fmt.Println(address)
+func runGarnish(address string) {
 	u := url.URL{Scheme: "http", Host: "localhost:8088"}
 	g := garnish.New(u)
-	expectedXCacheHeaders := []string{garnish.XcacheMiss, garnish.XcacheHit}
+	handlers := func(w http.ResponseWriter, req *http.Request) {
 
-	for _, expectedHeader := range expectedXCacheHeaders {
-		req := httptest.NewRequest(http.MethodGet, "http://localhost:8088", nil)
-		w := httptest.NewRecorder()
 		g.ServeHTTP(w, req, address)
-
 		xcache := w.Header().Get("X-Cache")
-		fmt.Println("Expected header: " + expectedHeader)
 		fmt.Println("Real header:" + xcache)
-
 	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", handlers)
+	log.Fatal(http.ListenAndServe(":8088", mux))
+	fmt.Println(address)
+
 }
 
+// func runClient(address string) {
+
+// 	fmt.Println(address)
+// 	u := url.URL{Scheme: "http", Host: "localhost:8088"}
+// 	g := garnish.New(u)
+// 	expectedXCacheHeaders := []string{garnish.XcacheMiss, garnish.XcacheHit}
+
+// 	for _, expectedHeader := range expectedXCacheHeaders {
+// 		req := httptest.NewRequest(http.MethodGet, "http://localhost:8088", nil)
+// 		w := httptest.NewRecorder()
+// 		g.ServeHTTP(w, req, address)
+
+// 		xcache := w.Header().Get("X-Cache")
+// 		fmt.Println("Expected header: " + expectedHeader)
+// 		fmt.Println("Real header:" + xcache)
+
+// 	}
+// }
+
 //change into scion
-func runServer(listen netaddr.IPPort) func() {
+func runServer(listen netaddr.IPPort) {
 	conn, err := pan.ListenUDP(context.Background(), listen, nil)
 	if err != nil {
 		fmt.Printf("listen error")
 	}
-	defer conn.Close()
+	//defer conn.Close()
 	fmt.Print("Hello! ")
 	fmt.Println(conn.LocalAddr())
-	buffer := make([]byte, 16*1024)
-	n, from, err := conn.ReadFrom(buffer)
-	if err != nil {
-		fmt.Printf("read error")
+	for true {
+		buffer := make([]byte, 16*1024)
+		n, from, err := conn.ReadFrom(buffer)
+		if err != nil {
+			fmt.Printf("read error")
+		}
+		msg := fmt.Sprintf("A")
+		n, err = conn.WriteTo([]byte(msg), from)
+		if err != nil {
+			fmt.Printf("write error")
+		}
+		fmt.Printf("Wrote %d bytes.\n", n)
+		time.Sleep(time.Millisecond * 30)
 	}
-	msg := fmt.Sprintf("A")
-	n, err = conn.WriteTo([]byte(msg), from)
-	if err != nil {
-		fmt.Printf("write error")
-	}
-	fmt.Printf("Wrote %d bytes.\n", n)
-	time.Sleep(time.Millisecond * 30)
-	return func() {
-		panicOnErr(err)
-	}
+
 }
 
 func panicOnErr(err error) {
