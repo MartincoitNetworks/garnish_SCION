@@ -1,0 +1,17 @@
+original server:
+18-ffaa:1:fc1,[127.0.0.1]:1234
+
+garnish server:
+127.0.0.1:8088
+
+client:
+httptest sending fake requests to garnish server
+
+client: chrome web browser IPV4
+json package
+
+infinite loop
+
+how to modify the network part
+
+

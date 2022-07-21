@@ -46,7 +46,9 @@ func (g *garnish) ServeHTTP(rw http.ResponseWriter, r *http.Request, serverAddre
 	}
 
 	u := r.URL.String()
+	fmt.Println(u)
 	cached := g.c.get(u)
+	fmt.Println(g.c.data)
 
 	//if cached, return the cached data
 	// send response back to the client
@@ -90,6 +92,7 @@ func (g *garnish) ServeHTTP(rw http.ResponseWriter, r *http.Request, serverAddre
 	}
 	n, err := conn.Read(buffer) //read to this buffer
 	if err != nil {
+		fmt.Println("here")
 		fmt.Println(err)
 		//return
 	}
@@ -98,4 +101,5 @@ func (g *garnish) ServeHTTP(rw http.ResponseWriter, r *http.Request, serverAddre
 	g.c.store(u, data, duration)
 	fmt.Print("Stored data: ")
 	fmt.Println(data)
+
 }
