@@ -4,14 +4,18 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"inet.af/netaddr"
 	"log"
 	"net/http"
 	"net/url"
 	"time"
 
+	"inet.af/netaddr"
+
+	//"encoding/base64"
+
 	"github.com/bkielbasa/garnish/garnish"
 	"github.com/netsec-ethz/scion-apps/pkg/pan"
+	//"io/ioutil"
 )
 
 func main() {
@@ -77,12 +81,30 @@ func runServer(listen netaddr.IPPort) {
 	fmt.Print("Hello! ")
 	fmt.Println(conn.LocalAddr())
 	for true {
-		buffer := make([]byte, 16*1024)
+		buffer := make([]byte, 1024*16*1024)
 		n, from, err := conn.ReadFrom(buffer)
 		if err != nil {
 			fmt.Printf("read error")
 		}
-		msg := fmt.Sprintf("A")
+		const msg = `<!DOCTYPE html>
+		<html lang="en">
+		<head>
+			<meta charset="UTF-8">
+			<title>Photo</title>
+		</head>
+		<body>
+		<h1>Welcome to Granish</h1>
+		<p>Using SCION architecture</p>
+		<img src="https://www.cylab.cmu.edu/_files/images/research/scion/scion-banner.png" alt="SCION banner">
+		</body>
+		</html>`
+		//msg := fmt.Sprintf("Aaaaa, i love it")
+		// srcByte, err := ioutil.ReadFile(`img.png`)
+		// if err != nil {
+		// 	fmt.Println(err)
+		// }
+		// msg := base64.StdEncoding.EncodeToString(srcByte)
+		// msg, err := template.New("webpage").Parse(t)
 		n, err = conn.WriteTo([]byte(msg), from)
 		if err != nil {
 			fmt.Printf("write error")
@@ -90,7 +112,6 @@ func runServer(listen netaddr.IPPort) {
 		fmt.Printf("Wrote %d bytes.\n", n)
 		time.Sleep(time.Millisecond * 30)
 	}
-
 }
 
 func panicOnErr(err error) {
