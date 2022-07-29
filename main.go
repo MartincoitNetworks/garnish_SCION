@@ -13,7 +13,6 @@ import (
 
 	"github.com/bkielbasa/garnish/garnish"
 	"github.com/netsec-ethz/scion-apps/pkg/pan"
-	
 )
 
 func main() {
@@ -42,7 +41,7 @@ func runGarnish(address string) {
 		fmt.Println("Real header:" + xcache)
 	}
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", handlers)
+	mux.HandleFunc("/hello", handlers)
 	log.Fatal(http.ListenAndServe(":8088", mux))
 	fmt.Println(address)
 
