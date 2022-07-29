@@ -4,18 +4,16 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	//"log"
+	"log"
 	"net/http"
 	"net/url"
 	//"time"
 
 	"inet.af/netaddr"
 
-	//"encoding/base64"
-
 	"github.com/bkielbasa/garnish/garnish"
 	"github.com/netsec-ethz/scion-apps/pkg/pan"
-	//"io/ioutil"
+	
 )
 
 func main() {
@@ -43,10 +41,9 @@ func runGarnish(address string) {
 		xcache := w.Header().Get("X-Cache")
 		fmt.Println("Real header:" + xcache)
 	}
-
 	mux := http.NewServeMux()
-	mux.HandleFunc("/hello", handlers)
-	http.ListenAndServe(":8088", mux)
+	mux.HandleFunc("/", handlers)
+	log.Fatal(http.ListenAndServe(":8088", mux))
 	fmt.Println(address)
 
 }
@@ -89,7 +86,7 @@ func runServer(listen netaddr.IPPort) {
 		<html lang="en">
 		<head>
 			<meta charset="UTF-8">
-			<title>Photo</title>
+			<title>SCION demo</title>
 		</head>
 		<body>
 		<h1>Welcome to Granish</h1>
@@ -98,12 +95,6 @@ func runServer(listen netaddr.IPPort) {
 		</body>
 		</html>`
 		//msg := fmt.Sprintf("Aaaaa, i love it")
-		// srcByte, err := ioutil.ReadFile(`img.png`)
-		// if err != nil {
-		// 	fmt.Println(err)
-		// }
-		// msg := base64.StdEncoding.EncodeToString(srcByte)
-		// msg, err := template.New("webpage").Parse(t)
 		n, err = conn.WriteTo([]byte(msg), from)
 		if err != nil {
 			fmt.Printf("write error")
