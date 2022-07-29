@@ -4,10 +4,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
+	//"log"
 	"net/http"
 	"net/url"
-	"time"
+	//"time"
 
 	"inet.af/netaddr"
 
@@ -39,15 +39,14 @@ func runGarnish(address string) {
 	u := url.URL{Scheme: "http", Host: "localhost:8088"}
 	g := garnish.New(u)
 	handlers := func(w http.ResponseWriter, req *http.Request) {
-
 		g.ServeHTTP(w, req, address)
 		xcache := w.Header().Get("X-Cache")
 		fmt.Println("Real header:" + xcache)
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", handlers)
-	log.Fatal(http.ListenAndServe(":8088", mux))
+	mux.HandleFunc("/hello", handlers)
+	http.ListenAndServe(":8088", mux)
 	fmt.Println(address)
 
 }
@@ -110,7 +109,7 @@ func runServer(listen netaddr.IPPort) {
 			fmt.Printf("write error")
 		}
 		fmt.Printf("Wrote %d bytes.\n", n)
-		time.Sleep(time.Millisecond * 30)
+		//time.Sleep(time.Millisecond * 30)
 	}
 }
 

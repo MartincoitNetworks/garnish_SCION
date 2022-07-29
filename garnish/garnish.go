@@ -99,7 +99,9 @@ func (g *garnish) ServeHTTP(rw http.ResponseWriter, r *http.Request, serverAddre
 	data := buffer[:n]
 	duration := time.Duration(123) * time.Second
 	g.c.store(u, data, duration)
+	_, _ = rw.Write(data)
 	fmt.Println("Store data ")
+	return
 	// fmt.Println(data)
 
 }
