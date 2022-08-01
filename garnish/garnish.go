@@ -35,7 +35,7 @@ func New(url url.URL) *garnish {
 	return &garnish{c: newCache(), proxy: reverseProxy}
 }
 
-func (g *garnish) ServeHTTP(rw http.ResponseWriter, r *http.Request, serverAddress string) {
+func (g *garnish) ServeHTTP(rw http.ResponseWriter, r *http.Request, serverAddress string, policy pan.Policy) {
 	// only GET requests should be cached
 	// send response back to the client
 	// do not need to change
@@ -71,10 +71,12 @@ func (g *garnish) ServeHTTP(rw http.ResponseWriter, r *http.Request, serverAddre
 		fmt.Println("server address error")
 		return
 	}
+	//Select path to control connection
+	//pathSelector := pan.NewDefaultSelector()
 	// garnish connect to the server
-	conn, err := pan.DialUDP(context.Background(), netaddr.IPPort{}, addr, nil, nil)
+	conn, err := pan.DialUDP(context.Background(), netaddr.IPPort{}, addr, policy, nil)
 	if err != nil {
-		fmt.Println("connect to server error")
+		fmt.Println(err)
 		return
 	}
 	defer conn.Close()

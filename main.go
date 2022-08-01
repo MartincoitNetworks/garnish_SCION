@@ -7,7 +7,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	//"time"
+	//"os"
+	"strings"
 
 	"inet.af/netaddr"
 
@@ -16,27 +17,43 @@ import (
 )
 
 func main() {
-	var listen pan.IPPortValue
+	var (
+		listen      pan.IPPortValue
+		remoteAddr  string
+		interactive bool
+		sequence    string
+		preference  string
+	)
 	flag.Var(&listen, "listen", "[Server] local IP:port to listen on")
-	remoteAddr := flag.String("remote", "", "[Client] Remote (i.e. the server's) SCION Address (e.g. 17-ffaa:1:1,[127.0.0.1]:12345)")
+	flag.StringVar(&remoteAddr, "remote", "", "[Client] Remote (i.e. the server's) SCION Address (e.g. 17-ffaa:1:1,[127.0.0.1]:12345)")
+	flag.BoolVar(&interactive, "i", false, "Interactive path selection, prompt to choose path")
+	flag.StringVar(&sequence, "sequence", "", "Sequence of space separated hop predicates to specify path")
+	flag.StringVar(&preference, "preference", "", "Preference sorting order for paths. "+
+		"Comma-separated list of available sorting options: "+
+		strings.Join(pan.AvailablePreferencePolicies, "|"))
+
 	flag.Parse()
-	if (listen.Get().Port() > 0) == (len(*remoteAddr) > 0) {
+	policy, err := pan.PolicyFromCommandline(sequence, preference, interactive)
+	if err != nil {
+		fmt.Printf(err.Error())
+	}
+	if (listen.Get().Port() > 0) == (len(remoteAddr) > 0) {
 		panicOnErr(fmt.Errorf("either specify -listen for server or -remote for client"))
 	}
 
 	if listen.Get().Port() > 0 {
 		runServer(listen.Get())
 	} else {
-		runGarnish(*remoteAddr)
+		runGarnish(remoteAddr, policy)
 	}
 
 }
 
-func runGarnish(address string) {
+func runGarnish(address string, policy pan.Policy) {
 	u := url.URL{Scheme: "http", Host: "localhost:8088"}
 	g := garnish.New(u)
 	handlers := func(w http.ResponseWriter, req *http.Request) {
-		g.ServeHTTP(w, req, address)
+		g.ServeHTTP(w, req, address, policy)
 		xcache := w.Header().Get("X-Cache")
 		fmt.Println("Real header:" + xcache)
 	}
@@ -46,25 +63,6 @@ func runGarnish(address string) {
 	fmt.Println(address)
 
 }
-
-// func runClient(address string) {
-
-// 	fmt.Println(address)
-// 	u := url.URL{Scheme: "http", Host: "localhost:8088"}
-// 	g := garnish.New(u)
-// 	expectedXCacheHeaders := []string{garnish.XcacheMiss, garnish.XcacheHit}
-
-// 	for _, expectedHeader := range expectedXCacheHeaders {
-// 		req := httptest.NewRequest(http.MethodGet, "http://localhost:8088", nil)
-// 		w := httptest.NewRecorder()
-// 		g.ServeHTTP(w, req, address)
-
-// 		xcache := w.Header().Get("X-Cache")
-// 		fmt.Println("Expected header: " + expectedHeader)
-// 		fmt.Println("Real header:" + xcache)
-
-// 	}
-// }
 
 //change into scion
 func runServer(listen netaddr.IPPort) {
@@ -99,7 +97,6 @@ func runServer(listen netaddr.IPPort) {
 			fmt.Printf("write error")
 		}
 		fmt.Printf("Wrote %d bytes.\n", n)
-		//time.Sleep(time.Millisecond * 30)
 	}
 }
 
