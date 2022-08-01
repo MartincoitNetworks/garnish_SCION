@@ -11,4 +11,7 @@ run tests using command-line (you need first cd to the garnish_SCION/garnish/): 
 
 In the server side, run `go run main.go -listen 127.0.0.1:1234`
 In the client side, run `go run main.go -remote 18-ffaa:1:fc1,[127.0.0.1]:1234`
+18-ffaa:1:fc1 is the server's AS number.
+If you want to select path, add `-i` to the client's command line;
+If you have path selection preference, add `-p latency|bandwidth|hops|mtu`
 

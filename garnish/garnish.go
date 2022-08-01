@@ -72,13 +72,15 @@ func (g *garnish) ServeHTTP(rw http.ResponseWriter, r *http.Request, serverAddre
 		return
 	}
 	//Select path to control connection
-	//pathSelector := pan.NewDefaultSelector()
+	pathSelector := pan.NewDefaultSelector()
 	// garnish connect to the server
-	conn, err := pan.DialUDP(context.Background(), netaddr.IPPort{}, addr, policy, nil)
+	conn, err := pan.DialUDP(context.Background(), netaddr.IPPort{}, addr, policy, pathSelector)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	fmt.Print("Chosen path: ")
+	fmt.Println(pathSelector.Path())
 	defer conn.Close()
 
 	nBytes, err := conn.Write([]byte(fmt.Sprintf("garnish message")))
