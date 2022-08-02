@@ -2,17 +2,19 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"log"
+	"errors"
 	"net/http"
 	"net/url"
-	//"time"
-
+	"github.com/lucas-clemente/quic-go"
+	"io/ioutil"
 	"inet.af/netaddr"
-
 	"github.com/bkielbasa/garnish/garnish"
 	"github.com/netsec-ethz/scion-apps/pkg/pan"
+	"github.com/netsec-ethz/scion-apps/pkg/quicutil"
 )
 
 func main() {
@@ -66,21 +68,19 @@ func runGarnish(address string) {
 // 	}
 // }
 
-//change into scion
-func runServer(listen netaddr.IPPort) {
-	conn, err := pan.ListenUDP(context.Background(), listen, nil)
-	if err != nil {
-		fmt.Printf("listen error")
-	}
-	//defer conn.Close()
-	fmt.Print("Hello! ")
-	fmt.Println(conn.LocalAddr())
-	for true {
-		buffer := make([]byte, 1024*16*1024)
-		n, from, err := conn.ReadFrom(buffer)
+// create work session
+func workSession(session quic.Session) error {
+	for {
+		stream, err := session.AcceptStream(context.Background())
 		if err != nil {
-			fmt.Printf("read error")
+			return err
 		}
+		defer stream.Close()
+		data, err := ioutil.ReadAll(stream)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%s\n", data)
 		const msg = `<!DOCTYPE html>
 		<html lang="en">
 		<head>
@@ -93,14 +93,46 @@ func runServer(listen netaddr.IPPort) {
 		<img src="https://www.cylab.cmu.edu/_files/images/research/scion/scion-banner.png" alt="SCION banner">
 		</body>
 		</html>`
-		//msg := fmt.Sprintf("Aaaaa, i love it")
-		n, err = conn.WriteTo([]byte(msg), from)
+		_, err = stream.Write([]byte(msg))
 		if err != nil {
-			fmt.Printf("write error")
+			return err
 		}
-		fmt.Printf("Wrote %d bytes.\n", n)
-		//time.Sleep(time.Millisecond * 30)
+		_, err = stream.Write(data)
+		if err != nil {
+			return err
+		}
+		stream.Close()
 	}
+}
+//change into scion
+func runServer(listen netaddr.IPPort) {
+	//conn, err := pan.ListenUDP(context.Background(), listen, nil)
+	tlsCfg := &tls.Config{
+		Certificates: quicutil.MustGenerateSelfSignedCert(),
+		NextProtos:   []string{"hello-quic"},
+	}
+	
+	listener, err := pan.ListenQUIC(context.Background(), listen, nil, tlsCfg, nil)
+	if err != nil {
+		fmt.Printf("listen error")
+	}
+	defer listener.Close()
+	//18-ffaa:1:f53,127.0.0.1:1234
+	fmt.Println(listener.Addr())
+	for {
+		session, err := listener.Accept(context.Background())
+		if err != nil {
+			fmt.Printf("listener accept error")
+		}
+		fmt.Println("New session", session.RemoteAddr())
+		go func() {
+			err := workSession(session)
+			var errApplication *quic.ApplicationError
+			if err != nil && !(errors.As(err, &errApplication) && errApplication.ErrorCode == 0) {
+				fmt.Println(session.RemoteAddr())
+			}
+		}()
+	}		
 }
 
 func panicOnErr(err error) {

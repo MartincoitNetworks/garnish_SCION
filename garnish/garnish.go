@@ -9,6 +9,9 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"time"
+	"crypto/tls"
+	"io/ioutil"
+
 )
 
 const Xcache = "X-Cache"
@@ -72,36 +75,55 @@ func (g *garnish) ServeHTTP(rw http.ResponseWriter, r *http.Request, serverAddre
 		return
 	}
 	// garnish connect to the server
-	conn, err := pan.DialUDP(context.Background(), netaddr.IPPort{}, addr, nil, nil)
+	//conn, err := pan.DialUDP(context.Background(), netaddr.IPPort{}, addr, nil, nil)
+	tlsCfg := &tls.Config{
+		InsecureSkipVerify: true,
+		NextProtos:         []string{"hello-quic"},
+	}
+	// Set Pinging Selector with active probing on two paths
+	selector := &pan.PingingSelector{
+		Interval: 2 * time.Second,
+		Timeout:  time.Second,
+	}
+	selector.SetActive(2)
+	session, err := pan.DialQUIC(context.Background(), netaddr.IPPort{}, addr, nil, selector, "", tlsCfg, nil)
 	if err != nil {
 		fmt.Println("connect to server error")
 		return
 	}
-	defer conn.Close()
+	//defer conn.Close()
 
-	nBytes, err := conn.Write([]byte(fmt.Sprintf("garnish message")))
+	//nBytes, err := conn.Write([]byte(fmt.Sprintf("garnish message")))
+	stream, err := session.OpenStream()
 	if err != nil {
-		fmt.Print(nBytes)
 		fmt.Println(err)
 	}
-
-	buffer := make([]byte, 16*1024)
-	if err = conn.SetReadDeadline(time.Now().Add(1 * time.Second)); err != nil {
-		fmt.Println("SetReadDeadline error")
-		return
+	_, err = stream.Write([]byte(fmt.Sprintf("Welcome to Scion")))
+	
+	if err != nil {
+		fmt.Println(err)
 	}
-	n, err := conn.Read(buffer) //read to this buffer
+	
+	//  
+	stream.Close()
+	//buffer := make([]byte, 16*1024)
+	// if err = conn.SetReadDeadline(time.Now().Add(1 * time.Second)); err != nil {
+	// 	fmt.Println("SetReadDeadline error")
+	// 	return
+	// }
+	//n, err := conn.Read(buffer) //read to this buffer
+	data, err := ioutil.ReadAll(stream)
 	if err != nil {
 		fmt.Println("here")
 		fmt.Println(err)
 		//return
 	}
-	data := buffer[:n]
+	//data := buffer[:n]
 	duration := time.Duration(123) * time.Second
 	g.c.store(u, data, duration)
 	_, _ = rw.Write(data)
 	fmt.Println("Store data ")
 	return
 	// fmt.Println(data)
-
+	
 }
