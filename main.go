@@ -52,6 +52,7 @@ func main() {
 func runGarnish(address string, policy pan.Policy) {
 	u := url.URL{Scheme: "http", Host: "localhost:8088"}
 	g := garnish.New(u)
+	fmt.Println("Starting  up Garnish Server: ")
 	handlers := func(w http.ResponseWriter, req *http.Request) {
 		g.ServeHTTP(w, req, address, policy)
 		xcache := w.Header().Get("X-Cache")
@@ -71,7 +72,7 @@ func runServer(listen netaddr.IPPort) {
 		fmt.Printf("listen error")
 	}
 	//defer conn.Close()
-	fmt.Print("Hello! ")
+	fmt.Print("Starting  up origin server: ")
 	fmt.Println(conn.LocalAddr())
 	for true {
 		buffer := make([]byte, 1024*16*1024)
@@ -86,7 +87,7 @@ func runServer(listen netaddr.IPPort) {
 			<title>SCION demo</title>
 		</head>
 		<body>
-		<h1>Welcome to Granish</h1>
+		<h1>Welcome to Garnish</h1>
 		<p>Using SCION architecture</p>
 		<img src="https://www.cylab.cmu.edu/_files/images/research/scion/scion-banner.png" alt="SCION banner">
 		</body>
